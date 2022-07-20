@@ -1,9 +1,13 @@
-package JavaHW3;
+package tasks;
+
+import project3.Status;
+
+import java.util.Objects;
 
 public class Task {
     private String name;
     private String description;
-    private int identificationNum;
+    private int id;
     private Status status;
 
     public Task(String name, String description, Status status) {
@@ -16,12 +20,12 @@ public class Task {
         return status;
     }
 
-    public void setIdentificationNum(int identificationNum) {
-        this.identificationNum = identificationNum;
+    public void setId(int id) {
+        this.id = id;
     }
 
-    public int getIdentificationNum() {
-        return identificationNum;
+    public int getId() {
+        return id;
     }
 
     public void setStatus(Status status) {
@@ -33,8 +37,21 @@ public class Task {
         return "Task{" +
                 "name='" + name + '\'' +
                 ", description='" + description + '\'' +
-                ", identificationNum=" + identificationNum +
+                ", id=" + id +
                 ", status='" + status + '\'' +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Task task = (Task) o;
+        return id == task.id && Objects.equals(name, task.name) && Objects.equals(description, task.description) && status == task.status;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, description, id, status);
     }
 }
