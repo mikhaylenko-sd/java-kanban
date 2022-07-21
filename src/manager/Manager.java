@@ -1,6 +1,7 @@
-package project3;
+package manager;
 
 import tasks.Epic;
+import tasks.Status;
 import tasks.SubTask;
 import tasks.Task;
 
@@ -36,7 +37,7 @@ public class Manager {
         for (Epic epic : epics.values()) {
             if (!epic.getSubTaskIds().isEmpty()) {
                 epic.getSubTaskIds().clear();
-                epic.setStatus(Status.DONE);
+                epic.setStatus(Status.NEW);
             }
         }
     }
@@ -136,7 +137,7 @@ public class Manager {
         return subTasksInTheEpic;
     }
 
-    public void recalculateEpicStatus(int epicId) {
+    private void recalculateEpicStatus(int epicId) {
         int newCounter = 0;
         int doneCounter = 0;
         Epic epic = epics.get(epicId);

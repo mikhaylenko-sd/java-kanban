@@ -1,5 +1,5 @@
-package project3;
-
+import manager.Manager;
+import tasks.Status;
 import tasks.Epic;
 import tasks.SubTask;
 import tasks.Task;

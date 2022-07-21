@@ -1,4 +1,4 @@
-package project3;
+package manager;
 
 public class GeneratorId {
     private int id;
