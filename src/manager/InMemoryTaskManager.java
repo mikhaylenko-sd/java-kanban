@@ -5,33 +5,44 @@ import tasks.Status;
 import tasks.SubTask;
 import tasks.Task;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public class Manager {
+
+public class InMemoryTaskManager implements TaskManager {
 
     private Map<Integer, Task> tasks = new HashMap<>();
     private Map<Integer, SubTask> subTasks = new HashMap<>();
     private Map<Integer, Epic> epics = new HashMap<>();
     private GeneratorId generatorId = new GeneratorId();
+    private HistoryManager historyManager = Managers.getDefaultHistory();
+
 
     //получить все задачи (задачи, подзадачи, эпики)
+    @Override
     public List<Task> getAllTasks() {
         return new ArrayList<>(tasks.values());
     }
 
+    @Override
     public List<SubTask> getAllSubTasks() {
         return new ArrayList<>(subTasks.values());
     }
 
+    @Override
     public List<Epic> getAllEpics() {
         return new ArrayList<>(epics.values());
     }
 
     //удалить все задачи (задачи, подзадачи, эпики)
+    @Override
     public void removeAllTasks() {
         tasks.clear();
     }
 
+    @Override
     public void removeAllSubTasks() {
         subTasks.clear();
         for (Epic epic : epics.values()) {
@@ -42,31 +53,40 @@ public class Manager {
         }
     }
 
+    @Override
     public void removeAllEpics() {
         epics.clear();
         subTasks.clear();
     }
 
     //получить все задачи по идентификатору (задачи, подзадачи, эпики)
+    @Override
     public Task getTaskById(int id) {
+        historyManager.add(tasks.get(id));
         return tasks.get(id);
     }
 
+    @Override
     public SubTask getSubTaskById(int id) {
+        historyManager.add(subTasks.get(id));
         return subTasks.get(id);
     }
 
+    @Override
     public Epic getEpicById(int id) {
+        historyManager.add(epics.get(id));
         return epics.get(id);
     }
 
     //создание задачи, подзадачи, эпика
+    @Override
     public void createTask(Task task) {
         int id = generatorId.generate();
         task.setId(id);
         tasks.put(id, task);
     }
 
+    @Override
     public void createSubTask(SubTask subTask) {
         if (epics.containsKey(subTask.getEpicId())) {
             int id = generatorId.generate();
@@ -78,6 +98,7 @@ public class Manager {
         }
     }
 
+    @Override
     public void createEpic(Epic epic) {
         int id = generatorId.generate();
         epic.setId(id);
@@ -85,12 +106,14 @@ public class Manager {
     }
 
     //обновление задачи, подзадачи, эпика
+    @Override
     public void updateTask(Task task) {
         if (tasks.containsKey(task.getId())) {
             tasks.put(task.getId(), task);
         }
     }
 
+    @Override
     public void updateSubTask(SubTask subTask) {
         if (subTasks.containsKey(subTask.getId())) {
             subTasks.put(subTask.getId(), subTask);
@@ -98,6 +121,7 @@ public class Manager {
         }
     }
 
+    @Override
     public void updateEpic(Epic epic) {
         if (epics.containsKey(epic.getId())) {
             epics.put(epic.getId(), epic);
@@ -105,12 +129,13 @@ public class Manager {
         }
     }
 
+    @Override
     //удаление по идентификатору задачи, подзадачи, эпика
     public void removeTaskById(int id) {
         tasks.remove(id);
-
     }
 
+    @Override
     public void removeSubTaskById(int id) {
         SubTask subTask = subTasks.get(id);
         if (subTask != null) {
@@ -121,6 +146,7 @@ public class Manager {
         }
     }
 
+    @Override
     public void removeEpicById(int id) {
         Epic epic = epics.get(id);
         for (int subTaskId : epic.getSubTaskIds()) {
@@ -129,6 +155,7 @@ public class Manager {
         epics.remove(id);
     }
 
+    @Override
     public List<SubTask> getSubTasksInTheEpic(Epic epic) {
         List<SubTask> subTasksInTheEpic = new ArrayList<>();
         for (Integer id : epic.getSubTaskIds()) {
@@ -157,4 +184,10 @@ public class Manager {
             epic.setStatus(Status.IN_PROGRESS);
         }
     }
+
+    @Override
+    public List<Task> getHistory() {
+        return historyManager.getHistory();
+    }
+
 }
