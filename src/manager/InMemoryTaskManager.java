@@ -62,20 +62,23 @@ public class InMemoryTaskManager implements TaskManager {
     //получить все задачи по идентификатору (задачи, подзадачи, эпики)
     @Override
     public Task getTaskById(int id) {
-        historyManager.add(tasks.get(id));
-        return tasks.get(id);
+        Task task = tasks.get(id);
+        historyManager.add(task);
+        return task;
     }
 
     @Override
     public SubTask getSubTaskById(int id) {
-        historyManager.add(subTasks.get(id));
-        return subTasks.get(id);
+        SubTask subTask = subTasks.get(id);
+        historyManager.add(subTask);
+        return subTask;
     }
 
     @Override
     public Epic getEpicById(int id) {
-        historyManager.add(epics.get(id));
-        return epics.get(id);
+        Epic epic = epics.get(id);
+        historyManager.add(epic);
+        return epic;
     }
 
     //создание задачи, подзадачи, эпика
@@ -164,6 +167,11 @@ public class InMemoryTaskManager implements TaskManager {
         return subTasksInTheEpic;
     }
 
+    @Override
+    public List<Task> getHistory() {
+        return historyManager.getHistory();
+    }
+
     private void recalculateEpicStatus(int epicId) {
         int newCounter = 0;
         int doneCounter = 0;
@@ -184,10 +192,4 @@ public class InMemoryTaskManager implements TaskManager {
             epic.setStatus(Status.IN_PROGRESS);
         }
     }
-
-    @Override
-    public List<Task> getHistory() {
-        return historyManager.getHistory();
-    }
-
 }
