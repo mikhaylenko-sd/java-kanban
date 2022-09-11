@@ -2,25 +2,70 @@ package manager;
 
 import tasks.Task;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 
+
 public class InMemoryHistoryManager implements HistoryManager {
-    public static final int SIZE_OF_MEMORY = 10;
-    private final List<Task> historyOfTasks = new LinkedList<>();
+    private final Map<Integer, Node> historyHashMap = new HashMap<>();
+    private Node first;
+    private Node last;
 
     @Override
     public void add(Task task) {
-        if (task != null) {
-            if (historyOfTasks.size() >= SIZE_OF_MEMORY) {
-                historyOfTasks.remove(0);
-            }
-            historyOfTasks.add(task);
+        if (task == null) {
+            return;
+        }
+        remove(task.getId());
+        Node node = new Node(task);
+        linkLast(node);
+        historyHashMap.put(task.getId(), node);
+    }
+
+    @Override
+    public void remove(int id) {
+        if (historyHashMap.get(id) != null) {
+            removeNode(historyHashMap.get(id));
+            historyHashMap.remove(id);
         }
     }
 
     @Override
     public List<Task> getHistory() {
-        return historyOfTasks;
+        List<Task> historyTasks = new ArrayList<>();
+        for (Node x = first; x != null; x = x.next) {
+            historyTasks.add(x.data);
+        }
+        return historyTasks;
+    }
+
+    private void linkLast(Node node) {
+        if (!historyHashMap.isEmpty()) {
+            Node x = last;
+            last = node;
+            last.prev = x;
+            x.next = last;
+        } else {
+            first = node;
+            last = node;
+        }
+    }
+
+    private void removeNode(Node node) {
+        if (node.prev == null && node.next == null) {
+            first = null;
+            last = null;
+        } else if (node.prev == null) {
+            node.next.prev = null;
+            first = node.next;
+        } else if (node.next == null) {
+            node.prev.next = null;
+            last = node.prev;
+        } else {
+            node.prev.next = node.next;
+            node.next.prev = node.prev;
+        }
     }
 }

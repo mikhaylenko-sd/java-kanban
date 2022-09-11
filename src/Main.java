@@ -25,13 +25,34 @@ public class Main {
         taskManager.createSubTask(subTask2);
         taskManager.createSubTask(subTask3);
 
-        taskManager.getTaskById(2);
-        taskManager.getSubTaskById(4);
-        taskManager.getEpicById(3);
-        System.out.println("____________________________________");
-        System.out.println(taskManager.getHistory());
+        Epic epic2 = new Epic("Отпраздновать выпускной", "Организовать праздник", Status.NEW);
+        taskManager.createEpic(epic2);
 
-        taskManager.removeTaskById(1);
+        taskManager.getTaskById(1);
+        taskManager.getTaskById(1);
+        taskManager.getEpicById(3);
+        taskManager.getSubTaskById(4);
+        taskManager.getSubTaskById(5);
+        taskManager.getSubTaskById(4);
+        taskManager.getEpicById(7);
+        System.out.println(taskManager.getHistory());
+        System.out.println("____________________________________");
+
+        taskManager.getTaskById(2);
+        taskManager.getEpicById(7);
+        System.out.println(taskManager.getHistory());
+        System.out.println("____________________________________");
+
+        taskManager.removeTaskById(2);
+        System.out.println(taskManager.getHistory());
+        System.out.println("____________________________________");
+        taskManager.removeEpicById(3);
+        System.out.println(taskManager.getHistory());
+        System.out.println("____________________________________");
+
+        taskManager.getEpicById(3);
+
+        /*taskManager.removeTaskById(1);
         taskManager.removeSubTaskById(5);
         //taskManager.removeEpicById(3);
         System.out.println();
@@ -66,36 +87,6 @@ public class Main {
 
         System.out.println("____________________________________");
         System.out.println(taskManager.getHistory());
-
-    }
-
-    public static void printAllTasks(HashMap<Integer, Task> allTasks) {
-        if (allTasks.size() != 0) {
-            for (Task task : allTasks.values()) {
-                System.out.println(task);
-            }
-        } else {
-            System.out.println("В трекере нет ни одной задачи");
-        }
-    }
-
-    public static void printAllSubTasks(HashMap<Integer, SubTask> allTasks) {
-        if (allTasks.size() != 0) {
-            for (Task task : allTasks.values()) {
-                System.out.println(task);
-            }
-        } else {
-            System.out.println("В трекере нет ни одной задачи");
-        }
-    }
-
-    public static void printAllEpics(HashMap<Integer, Epic> allTasks) {
-        if (allTasks.size() != 0) {
-            for (Task task : allTasks.values()) {
-                System.out.println(task);
-            }
-        } else {
-            System.out.println("В трекере нет ни одной задачи");
-        }
+*/
     }
 }
