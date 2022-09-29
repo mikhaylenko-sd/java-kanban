@@ -19,6 +19,21 @@ public class InMemoryTaskManager implements TaskManager {
     final private GeneratorId generatorId = new GeneratorId();
     final private HistoryManager historyManager = Managers.getDefaultHistory();
 
+    protected Map<Integer, Task> getTasks() {
+        return tasks;
+    }
+
+    protected Map<Integer, SubTask> getSubTasks() {
+        return subTasks;
+    }
+
+    protected Map<Integer, Epic> getEpics() {
+        return epics;
+    }
+
+    public HistoryManager getHistoryManager() {
+        return historyManager;
+    }
 
     //получить все задачи (задачи, подзадачи, эпики)
     @Override

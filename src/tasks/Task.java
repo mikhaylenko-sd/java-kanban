@@ -7,11 +7,21 @@ public class Task {
     private String description;
     private int id;
     private Status status;
+    private TaskType taskType;
 
-    public Task(String name, String description, Status status) {
+    public Task(String name, String description, Status status, TaskType taskType) {
         this.name = name;
         this.description = description;
         this.status = status;
+        this.taskType = taskType;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getDescription() {
+        return description;
     }
 
     public Status getStatus() {
@@ -26,18 +36,21 @@ public class Task {
         return id;
     }
 
+    public TaskType getTaskType() {
+        return taskType;
+    }
+
     public void setStatus(Status status) {
         this.status = status;
     }
 
     @Override
     public String toString() {
-        return "Task{" +
-                "name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", id=" + id +
-                ", status='" + status + '\'' +
-                '}';
+        return "{id = " + id +
+                ", type = " + taskType +
+                ", name = " + name +
+                ", status = " + status +
+                ", description = " + description + "}";
     }
 
     @Override

@@ -2,16 +2,18 @@ import manager.Managers;
 import manager.TaskManager;
 import tasks.Epic;
 import tasks.Status;
+import tasks.TaskType;
 import tasks.SubTask;
 import tasks.Task;
+import tasks.TaskType;
 
 import java.util.HashMap;
 
 public class Main {
     public static void main(String[] args) {
         TaskManager taskManager = Managers.getDefault();
-        Task task1 = new Task("Переезд", "Собрать вещи", Status.NEW);
-        Task task2 = new Task("Выступление", "Подготовить речь", Status.NEW);
+        Task task1 = new Task("Переезд", "Собрать вещи", Status.NEW, TaskType.TASK);
+        Task task2 = new Task("Выступление", "Подготовить речь", Status.NEW, TaskType.TASK);
         taskManager.createTask(task1);
         taskManager.createTask(task2);
 
