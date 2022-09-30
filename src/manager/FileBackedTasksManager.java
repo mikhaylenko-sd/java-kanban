@@ -16,7 +16,7 @@ import java.util.List;
 
 public class FileBackedTasksManager extends InMemoryTaskManager {
     public static void main(String[] args) {
-        FileBackedTasksManager fileBackedTasksManager = new FileBackedTasksManager(Paths.get("D:\\IDEA_projects\\java-kanban\\src\\manager\\file.csv").toFile());
+        FileBackedTasksManager fileBackedTasksManager = new FileBackedTasksManager(Paths.get("file.csv").toFile());
         Task task1 = new Task("Переезд", "Собрать вещи", Status.NEW, TaskType.TASK);
         fileBackedTasksManager.createTask(task1);
         Task task2 = new Task("Выступление", "Подготовить речь", Status.NEW, TaskType.TASK);
@@ -34,17 +34,23 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
 
         fileBackedTasksManager.getTaskById(1);
         fileBackedTasksManager.getSubTaskById(6);
+        fileBackedTasksManager.getTaskById(2);
         System.out.println(fileBackedTasksManager.getHistory());
         System.out.println(fileBackedTasksManager.getTasks());
         System.out.println(fileBackedTasksManager.getSubTasks());
         System.out.println(fileBackedTasksManager.getEpics());
         System.out.println("--------------------");
 
-        FileBackedTasksManager fileBackedTasksManager1 = loadFromFile(Paths.get("D:\\IDEA_projects\\java-kanban\\src\\manager\\file.csv").toFile());
+        FileBackedTasksManager fileBackedTasksManager1 = loadFromFile(Paths.get("file.csv").toFile());
         System.out.println(fileBackedTasksManager1.getHistory());
         System.out.println(fileBackedTasksManager1.getTasks());
         System.out.println(fileBackedTasksManager1.getSubTasks());
         System.out.println(fileBackedTasksManager1.getEpics());
+        Task task3 = new Task("ffffffff", "hhhhhh", Status.NEW, TaskType.TASK);
+        fileBackedTasksManager1.createTask(task3);
+        fileBackedTasksManager1.removeSubTaskById(6);
+        Epic epic3 = new Epic("ggggg", "ggggggg", Status.NEW);
+        fileBackedTasksManager1.createEpic(epic3);
 
     }
 
@@ -55,8 +61,7 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
     }
 
     public void save() {
-        try {
-            PrintWriter printWriter = new PrintWriter(file.getAbsolutePath());
+        try (PrintWriter printWriter = new PrintWriter(file.getAbsolutePath())) {
             printWriter.write("id,type,name,status,description,epic\n");
             for (Task task : getTasks().values()) {
                 printWriter.write(toString(task) + "\n");
@@ -69,9 +74,8 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
             }
             printWriter.write("\n");
             printWriter.write(historyToString(getHistoryManager()));
-            printWriter.close();
         } catch (IOException e) {
-            throw new ManagerSaveException("Исключение IOException");
+            throw new ManagerSaveException(e.getMessage());
         }
     }
 
@@ -81,9 +85,10 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
         try {
             allLines = Files.readAllLines(file.toPath());
         } catch (IOException e) {
-            throw new ManagerSaveException("Исключение IOException");
+            throw new ManagerSaveException(e.getMessage());
         }
         String history = null;
+        int maxId = 0;
         for (int i = 1; i < allLines.size(); i++) {
             if (!allLines.get(i).isBlank()) {
                 Task task = fromString(allLines.get(i));
@@ -98,11 +103,16 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
                         fileBackedTasksManager.getSubTasks().put(task.getId(), (SubTask) task);
                         break;
                 }
+                if (task.getId() > maxId) {
+                    maxId = task.getId();
+                }
             } else {
                 history = allLines.get(allLines.size() - 1);
                 break;
             }
         }
+        fileBackedTasksManager.getGeneratorId().setId(maxId);
+
         if (history != null && !history.isBlank()) {
             List<Integer> historyOfTasks = historyFromString(history);
             for (Integer taskHistory : historyOfTasks) {

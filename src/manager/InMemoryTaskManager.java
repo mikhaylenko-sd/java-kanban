@@ -35,6 +35,10 @@ public class InMemoryTaskManager implements TaskManager {
         return historyManager;
     }
 
+    public GeneratorId getGeneratorId() {
+        return generatorId;
+    }
+
     //получить все задачи (задачи, подзадачи, эпики)
     @Override
     public List<Task> getAllTasks() {
