@@ -5,6 +5,7 @@ import tasks.SubTask;
 import tasks.Task;
 
 import java.util.List;
+import java.util.TreeSet;
 
 public interface TaskManager {
 
@@ -55,5 +56,6 @@ public interface TaskManager {
     //просмотр задач (получение списка 10 последних просмотренных задач)
     List<Task> getHistory();
 
+    TreeSet<Task> getPrioritizedTasks();
 
 }

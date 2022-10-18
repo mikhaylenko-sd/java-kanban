@@ -5,10 +5,16 @@ import tasks.Status;
 import tasks.SubTask;
 import tasks.Task;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.TreeSet;
 
 
 public class InMemoryTaskManager implements TaskManager {
@@ -18,6 +24,8 @@ public class InMemoryTaskManager implements TaskManager {
     final private Map<Integer, Epic> epics = new HashMap<>();
     final private GeneratorId generatorId = new GeneratorId();
     final private HistoryManager historyManager = Managers.getDefaultHistory();
+    static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yy HH:mm");
+    final private TreeSet<Task> sortedTasks = new TreeSet<>();
 
     protected Map<Integer, Task> getTasks() {
         return tasks;
@@ -68,6 +76,9 @@ public class InMemoryTaskManager implements TaskManager {
             if (!epic.getSubTaskIds().isEmpty()) {
                 epic.getSubTaskIds().clear();
                 epic.setStatus(Status.NEW);
+                epic.setEpicStartTime(null);
+                epic.setEpicEndTime(null);
+                epic.setEpicDuration(0);
             }
         }
     }
@@ -106,6 +117,7 @@ public class InMemoryTaskManager implements TaskManager {
         int id = generatorId.generate();
         task.setId(id);
         tasks.put(id, task);
+        sortedTasks.add(task);
     }
 
     @Override
@@ -117,6 +129,8 @@ public class InMemoryTaskManager implements TaskManager {
             Epic epic = epics.get(subTask.getEpicId());
             epic.addSubTaskId(subTask.getId());
             recalculateEpicStatus(subTask.getEpicId());
+            recalculateEpicTime(subTask.getEpicId());
+            sortedTasks.add(subTask);
         }
     }
 
@@ -125,35 +139,48 @@ public class InMemoryTaskManager implements TaskManager {
         int id = generatorId.generate();
         epic.setId(id);
         epics.put(id, epic);
+        sortedTasks.add(epic);
     }
 
     //обновление задачи, подзадачи, эпика
     @Override
     public void updateTask(Task task) {
         if (tasks.containsKey(task.getId())) {
+            sortedTasks.remove(tasks.get(task.getId()));
             tasks.put(task.getId(), task);
+            sortedTasks.add(task);
         }
     }
 
     @Override
     public void updateSubTask(SubTask subTask) {
         if (subTasks.containsKey(subTask.getId())) {
+            sortedTasks.remove(subTasks.get(subTask.getId()));
             subTasks.put(subTask.getId(), subTask);
             recalculateEpicStatus(subTask.getEpicId());
+            recalculateEpicTime(subTask.getEpicId());
+            sortedTasks.add(subTask);
         }
     }
 
     @Override
     public void updateEpic(Epic epic) {
         if (epics.containsKey(epic.getId())) {
+            sortedTasks.remove(epics.get(epic.getId()));
             epics.put(epic.getId(), epic);
             recalculateEpicStatus(epic.getId());
+            recalculateEpicTime(epic.getId());
+            sortedTasks.add(epic);
         }
     }
 
     @Override
     //удаление по идентификатору задачи, подзадачи, эпика
     public void removeTaskById(int id) {
+        Task task = tasks.get(id);
+        if (task != null) {
+            sortedTasks.remove(task);
+        }
         tasks.remove(id);
         historyManager.remove(id);
     }
@@ -167,16 +194,23 @@ public class InMemoryTaskManager implements TaskManager {
             subTasks.remove(id);
             historyManager.remove(id);
             recalculateEpicStatus(epic.getId());
+            recalculateEpicTime(epic.getId());
+            sortedTasks.remove(subTask);
         }
     }
 
     @Override
     public void removeEpicById(int id) {
         Epic epic = epics.get(id);
-        for (int subTaskId : epic.getSubTaskIds()) {
-            subTasks.remove(subTaskId);
-            historyManager.remove(subTaskId);
+        if (epic != null) {
+            for (int subTaskId : epic.getSubTaskIds()) {
+                sortedTasks.remove(subTasks.get(subTaskId));
+                subTasks.remove(subTaskId);
+                historyManager.remove(subTaskId);
+            }
+            sortedTasks.remove(epic);
         }
+
         epics.remove(id);
         historyManager.remove(id);
     }
@@ -215,4 +249,51 @@ public class InMemoryTaskManager implements TaskManager {
             epic.setStatus(Status.IN_PROGRESS);
         }
     }
+
+    private void recalculateEpicTime(int epicId) {
+        Epic epic = epics.get(epicId);
+        sortedTasks.remove(epic);
+        epic.setEpicStartTime(recalculateEpicStartTime(epicId));
+        sortedTasks.add(epic);
+        epic.setEpicEndTime(recalculateEpicEndTime(epicId));
+        epic.setEpicDuration(recalculateEpicDuration(epicId));
+    }
+
+    private LocalDateTime recalculateEpicStartTime(int epicId) {
+        Epic epic = epics.get(epicId);
+        List<Integer> epicSubtaskIds = epic.getSubTaskIds();
+        return epicSubtaskIds.stream()
+                .map(subTasks::get)
+                .filter(Objects::nonNull)
+                .map(Task::getStartTime)
+                .min(LocalDateTime::compareTo)
+                .orElse(null);
+    }
+
+    private long recalculateEpicDuration(int epicId) {
+        Epic epic = epics.get(epicId);
+        List<Integer> epicSubtaskIds = epic.getSubTaskIds();
+        long sum = 0;
+        for (Integer epicSubtaskId : epicSubtaskIds) {
+            sum = sum + subTasks.get(epicSubtaskId).getDuration();
+        }
+        return sum;
+    }
+
+    private LocalDateTime recalculateEpicEndTime(int epicId) {
+        Epic epic = epics.get(epicId);
+        List<Integer> epicSubtaskIds = epic.getSubTaskIds();
+        return epicSubtaskIds.stream()
+                .map(subTasks::get)
+                .filter(Objects::nonNull)
+                .map(Task::getEndTime)
+                .filter(Objects::nonNull)
+                .max(LocalDateTime::compareTo)
+                .orElse(null);
+    }
+
+    public TreeSet<Task> getPrioritizedTasks() {
+        return sortedTasks;
+    }
+
 }

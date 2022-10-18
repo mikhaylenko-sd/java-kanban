@@ -12,23 +12,29 @@ import java.util.HashMap;
 public class Main {
     public static void main(String[] args) {
         TaskManager taskManager = Managers.getDefault();
-        Task task1 = new Task("Переезд", "Собрать вещи", Status.NEW, TaskType.TASK);
-        Task task2 = new Task("Выступление", "Подготовить речь", Status.NEW, TaskType.TASK);
+        Task task1 = new Task("Переезд", "Собрать вещи", Status.NEW, TaskType.TASK, "10.01.22 14:00", 50);
+        Task task2 = new Task("Выступление", "Подготовить речь", Status.NEW, TaskType.TASK, "10.01.22 12:00", 100);
         taskManager.createTask(task1);
         taskManager.createTask(task2);
+        System.out.println(taskManager.getPrioritizedTasks());
 
         Epic epic1 = new Epic("Защитить диплом", "Подготовиться к защите", Status.NEW);
         taskManager.createEpic(epic1);
+        System.out.println(taskManager.getPrioritizedTasks());
 
-        SubTask subTask1 = new SubTask(epic1.getId(), "Выбрать тему", "Изучить литературу", Status.NEW);
-        SubTask subTask2 = new SubTask(epic1.getId(), "Написать диплом", "Провести исследование, оформить главы", Status.NEW);
-        SubTask subTask3 = new SubTask(epic1.getId(), "Успешно пройти предзащиту", "Рассказать презентацию", Status.NEW);
+        SubTask subTask1 = new SubTask(epic1.getId(), "Выбрать тему", "Изучить литературу", Status.NEW, "01.01.22 10:00", 30);
+        SubTask subTask2 = new SubTask(epic1.getId(), "Написать диплом", "Провести исследование, оформить главы", Status.NEW, "01.01.22 11:00", 100);
+        SubTask subTask3 = new SubTask(epic1.getId(), "Успешно пройти предзащиту", "Рассказать презентацию", Status.NEW, "01.01.22 09:00", 70);
         taskManager.createSubTask(subTask1);
         taskManager.createSubTask(subTask2);
         taskManager.createSubTask(subTask3);
+        System.out.println(taskManager.getPrioritizedTasks());
 
         Epic epic2 = new Epic("Отпраздновать выпускной", "Организовать праздник", Status.NEW);
         taskManager.createEpic(epic2);
+
+        System.out.println(taskManager.getPrioritizedTasks());
+        System.out.println("____________________________________");
 
         taskManager.getTaskById(1);
         taskManager.getTaskById(1);
