@@ -5,9 +5,6 @@ import tasks.Status;
 import tasks.TaskType;
 import tasks.SubTask;
 import tasks.Task;
-import tasks.TaskType;
-
-import java.util.HashMap;
 
 public class Main {
     public static void main(String[] args) {
@@ -23,7 +20,7 @@ public class Main {
         System.out.println(taskManager.getPrioritizedTasks());
 
         SubTask subTask1 = new SubTask(epic1.getId(), "Выбрать тему", "Изучить литературу", Status.NEW, "01.01.22 10:00", 30);
-        SubTask subTask2 = new SubTask(epic1.getId(), "Написать диплом", "Провести исследование, оформить главы", Status.NEW, "01.01.22 11:00", 100);
+        SubTask subTask2 = new SubTask(epic1.getId(), "Написать диплом", "Провести исследование, оформить главы", Status.NEW, "01.01.22 10:31", 100);
         SubTask subTask3 = new SubTask(epic1.getId(), "Успешно пройти предзащиту", "Рассказать презентацию", Status.NEW, "01.01.22 09:00", 70);
         taskManager.createSubTask(subTask1);
         taskManager.createSubTask(subTask2);
