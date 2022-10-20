@@ -51,11 +51,10 @@ public interface TaskManager {
 
     void removeEpicById(int id);
 
-    List<SubTask> getSubTasksInTheEpic(Epic epic);
-
-    //просмотр задач (получение списка 10 последних просмотренных задач)
     List<Task> getHistory();
 
-    TreeSet<Task> getPrioritizedTasks();
+    List<SubTask> getSubTasksInTheEpic(Epic epic);
+
+    TreeSet<Task> getPrioritizedTasks();//////////////////////////////////////////////////////////
 
 }

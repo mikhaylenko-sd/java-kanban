@@ -316,12 +316,26 @@ public class InMemoryTaskManager implements TaskManager {
         if (prev == null && next == null) {
             return false;
         } else if (prev == null) {
-            return !task.getEndTime().isBefore(next.getStartTime());
+            return !isBefore(task.getEndTime(), next.getStartTime());
         } else if (next == null) {
-            return !task.getStartTime().isAfter(prev.getEndTime());
+            return !isAfter(task.getStartTime(), prev.getEndTime());
         } else {
-            return (!task.getStartTime().isAfter(prev.getEndTime()) || !task.getEndTime().isBefore(next.getStartTime()));
+            return (!isAfter(task.getStartTime(), prev.getEndTime()) || !isBefore(task.getEndTime(), next.getStartTime()));
         }
+    }
+
+    private boolean isBefore(LocalDateTime time1, LocalDateTime time2) {
+        if (time2 == null) {
+            return true;
+        }
+        return time1.isBefore(time2);
+    }
+
+    private boolean isAfter(LocalDateTime time1, LocalDateTime time2) {
+        if (time2 == null) {
+            return true;
+        }
+        return time1.isAfter(time2);
     }
 
 }

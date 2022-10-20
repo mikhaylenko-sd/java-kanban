@@ -12,7 +12,6 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,16 +52,16 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
         fileBackedTasksManager1.removeSubTaskById(6);
         Epic epic3 = new Epic("ggggg", "ggggggg", Status.NEW);
         fileBackedTasksManager1.createEpic(epic3);
-
     }
 
     private final File file;
 
     public FileBackedTasksManager(File file) {
         this.file = file;
+        save();
     }
 
-    public void save() {
+    private void save() {
         try (PrintWriter printWriter = new PrintWriter(file.getAbsolutePath())) {
             printWriter.write("id,type,name,status,description,epic, startTime, duration, endTime\n");
             for (Task task : getTasks().values()) {
@@ -81,14 +80,14 @@ public class FileBackedTasksManager extends InMemoryTaskManager {
         }
     }
 
-    private static FileBackedTasksManager loadFromFile(File file) {
-        FileBackedTasksManager fileBackedTasksManager = new FileBackedTasksManager(file);
+    public static FileBackedTasksManager loadFromFile(File file) {
         List<String> allLines;
         try {
             allLines = Files.readAllLines(file.toPath());
         } catch (IOException e) {
             throw new ManagerSaveException(e.getMessage());
         }
+        FileBackedTasksManager fileBackedTasksManager = new FileBackedTasksManager(file);
         String history = null;
         int maxId = 0;
         for (int i = 1; i < allLines.size(); i++) {
