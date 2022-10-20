@@ -45,14 +45,26 @@ public class TaskFactory {
     }
 
     public static SubTask createSubTaskWithId(int epicId) {
-        SubTask subTask = new SubTask(epicId,"subtask", "description", Status.NEW, generateNewDataAndTime(), 0);
+        SubTask subTask = new SubTask(epicId, "subtask", "description", Status.NEW, generateNewDataAndTime(), 0);
         subTask.setId(generateId());
         return subTask;
     }
 
     public static int generateId() {
-        id = id+1;
+        id = id + 1;
         return id;
+    }
+
+    public static Task createTaskWithTime(String startTime, long duration) {
+        return new Task("task", "description", Status.NEW, TaskType.TASK, startTime, duration);
+    }
+
+    public static Epic createEpicWithTime() {
+        return new Epic("epic", "description", Status.NEW);
+    }
+
+    public static SubTask createSubTaskWithTime(int epicId, String startTime, long duration) {
+        return new SubTask(epicId, "subtask", "description", Status.NEW, startTime, duration);
     }
 
 }

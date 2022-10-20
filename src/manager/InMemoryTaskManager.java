@@ -300,6 +300,9 @@ public class InMemoryTaskManager implements TaskManager {
         if (task.getClass().equals(Epic.class)) {
             return true;
         }
+        if (sortedTasks.contains(task)) {
+            return false;
+        }
         Task prev = sortedTasks.lower(task);
         Task next = sortedTasks.higher(task);
         if (prev == null && next == null) {
