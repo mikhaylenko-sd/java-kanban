@@ -112,22 +112,17 @@ public class InMemoryTaskManager implements TaskManager {
     //создание задачи, подзадачи, эпика
     @Override
     public void createTask(Task task) {
-        if (isInvalidTask(task)) {
-            return;
+        if (isValidTask(task)) {
+            int id = generatorId.generate();
+            task.setId(id);
+            tasks.put(id, task);
+            sortedTasks.add(task);
         }
-        int id = generatorId.generate();
-        task.setId(id);
-        tasks.put(id, task);
-        sortedTasks.add(task);
-
     }
 
     @Override
     public void createSubTask(SubTask subTask) {
-        if (isInvalidTask(subTask)) {
-            return;
-        }
-        if (epics.containsKey(subTask.getEpicId())) {
+        if (isValidTask(subTask) && epics.containsKey(subTask.getEpicId())) {
             int id = generatorId.generate();
             subTask.setId(id);
             subTasks.put(id, subTask);
@@ -150,10 +145,7 @@ public class InMemoryTaskManager implements TaskManager {
     //обновление задачи, подзадачи, эпика
     @Override
     public void updateTask(Task task) {
-        if (isInvalidTask(task)) {
-            return;
-        }
-        if (tasks.containsKey(task.getId())) {
+        if (isValidTask(task) && tasks.containsKey(task.getId())) {
             sortedTasks.remove(tasks.get(task.getId()));
             tasks.put(task.getId(), task);
             sortedTasks.add(task);
@@ -162,10 +154,7 @@ public class InMemoryTaskManager implements TaskManager {
 
     @Override
     public void updateSubTask(SubTask subTask) {
-        if (isInvalidTask(subTask)) {
-            return;
-        }
-        if (subTasks.containsKey(subTask.getId())) {
+        if (isValidTask(subTask) && subTasks.containsKey(subTask.getId())) {
             sortedTasks.remove(subTasks.get(subTask.getId()));
             subTasks.put(subTask.getId(), subTask);
             recalculateEpicStatus(subTask.getEpicId());
@@ -307,20 +296,20 @@ public class InMemoryTaskManager implements TaskManager {
         return sortedTasks;
     }
 
-    private boolean isInvalidTask(Task task) {
+    private boolean isValidTask(Task task) {
         if (task.getClass().equals(Epic.class)) {
-            return false;
+            return true;
         }
         Task prev = sortedTasks.lower(task);
         Task next = sortedTasks.higher(task);
         if (prev == null && next == null) {
-            return false;
+            return true;
         } else if (prev == null) {
-            return !isBefore(task.getEndTime(), next.getStartTime());
+            return isBefore(task.getEndTime(), next.getStartTime());
         } else if (next == null) {
-            return !isAfter(task.getStartTime(), prev.getEndTime());
+            return isAfter(task.getStartTime(), prev.getEndTime());
         } else {
-            return (!isAfter(task.getStartTime(), prev.getEndTime()) || !isBefore(task.getEndTime(), next.getStartTime()));
+            return (isAfter(task.getStartTime(), prev.getEndTime()) && isBefore(task.getEndTime(), next.getStartTime()));
         }
     }
 
