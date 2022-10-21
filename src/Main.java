@@ -1,10 +1,10 @@
 import manager.Managers;
 import manager.TaskManager;
-import tasks.Epic;
-import tasks.Status;
-import tasks.TaskType;
-import tasks.SubTask;
-import tasks.Task;
+import task.Epic;
+import task.Status;
+import task.TaskType;
+import task.SubTask;
+import task.Task;
 
 public class Main {
     public static void main(String[] args) {

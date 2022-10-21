@@ -1,14 +1,14 @@
-package test.tasks;
+package test;
 
 import manager.TaskManager;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import tasks.Epic;
-import tasks.Status;
-import tasks.SubTask;
-import tasks.Task;
-import tasks.TaskType;
+import task.Epic;
+import task.Status;
+import task.SubTask;
+import task.Task;
+import task.TaskType;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;

@@ -1,13 +1,13 @@
-package test.tasks;
+package test;
 
 import manager.HistoryManager;
 import manager.InMemoryHistoryManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import tasks.Epic;
-import tasks.SubTask;
-import tasks.Task;
+import task.Epic;
+import task.SubTask;
+import task.Task;
 
 import static org.junit.jupiter.api.Assertions.*;
 

@@ -1,10 +1,10 @@
-package test.tasks;
+package test;
 
-import tasks.Epic;
-import tasks.Status;
-import tasks.SubTask;
-import tasks.Task;
-import tasks.TaskType;
+import task.Epic;
+import task.Status;
+import task.SubTask;
+import task.Task;
+import task.TaskType;
 
 import java.time.LocalDateTime;
 import java.time.Month;
