@@ -29,7 +29,12 @@ public class Task implements Comparable<Task> {
         this.taskType = taskType;
         this.startTime = LocalDateTime.parse(startTime, FORMATTER);
         this.duration = duration;
-        this.endTime = getEndTime(this.startTime, duration);
+        calculateEndTime();
+        //this.endTime = getEndTime(this.startTime, duration);
+    }
+
+    public void calculateEndTime(){
+        endTime = startTime.plusMinutes(duration);
     }
 
     public LocalDateTime getEndTime(LocalDateTime startTime, long duration) {

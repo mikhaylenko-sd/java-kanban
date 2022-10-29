@@ -142,6 +142,12 @@ public class InMemoryTaskManager implements TaskManager {
         sortedTasks.add(epic);
     }
 
+    @Override
+    public boolean contains(Task task) {
+        int id = task.getId();
+        return tasks.containsKey(id) || subTasks.containsKey(id) || epics.containsKey(id);
+    }
+
     //обновление задачи, подзадачи, эпика
     @Override
     public void updateTask(Task task) {
@@ -216,8 +222,9 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     @Override
-    public List<SubTask> getSubTasksInTheEpic(Epic epic) {
+    public List<SubTask> getSubTasksInTheEpic(int epicId) {
         List<SubTask> subTasksInTheEpic = new ArrayList<>();
+        Epic epic = epics.get(epicId);
         for (Integer id : epic.getSubTaskIds()) {
             subTasksInTheEpic.add(subTasks.get(id));
         }

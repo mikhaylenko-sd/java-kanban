@@ -53,8 +53,10 @@ public interface TaskManager {
 
     List<Task> getHistory();
 
-    List<SubTask> getSubTasksInTheEpic(Epic epic);
+    List<SubTask> getSubTasksInTheEpic(int epicId);
 
-    TreeSet<Task> getPrioritizedTasks();//////////////////////////////////////////////////////////
+    TreeSet<Task> getPrioritizedTasks();
+
+    boolean contains(Task task);
 
 }

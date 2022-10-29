@@ -421,19 +421,17 @@ abstract class TaskManagerTest<T extends TaskManager> {
     @DisplayName("shouldReturnListOfSubTasksInTheEpic")
     @Test
     void getSubTasksInTheEpic() {
-        assertThrows(NullPointerException.class, () -> taskManager.getSubTasksInTheEpic(null));
-
         Epic epic1 = TaskFactory.createEpic(Status.NEW);
         taskManager.createEpic(epic1);
         SubTask subTask1 = TaskFactory.createSubTask(epic1.getId(), Status.DONE);
         SubTask subTask2 = TaskFactory.createSubTask(epic1.getId(), Status.NEW);
         taskManager.createSubTask(subTask1);
         taskManager.createSubTask(subTask2);
-        assertEquals(2, taskManager.getSubTasksInTheEpic(epic1).size());
+        assertEquals(2, taskManager.getSubTasksInTheEpic(epic1.getId()).size());
 
         Epic epic2 = TaskFactory.createEpic(Status.DONE);
         taskManager.createEpic(epic2);
-        assertEquals(0, taskManager.getSubTasksInTheEpic(epic2).size());
+        assertEquals(0, taskManager.getSubTasksInTheEpic(epic2.getId()).size());
     }
 
 }
