@@ -1,16 +1,15 @@
 package manager;
 
-import manager.HistoryManager;
-import manager.InMemoryHistoryManager;
-import manager.InMemoryTaskManager;
-import manager.TaskManager;
+import http.HTTPTaskManager;
 
 import java.io.File;
-import java.util.Arrays;
 
 public class Managers {
 
-    public static TaskManager getDefault(){
+    public static TaskManager getDefault(String backupKey){
+        return new HTTPTaskManager(backupKey);
+    }
+    public static TaskManager getInMemoryTaskManager(){
         return new InMemoryTaskManager();
     }
     public static HistoryManager getDefaultHistory(){

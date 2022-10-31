@@ -8,7 +8,7 @@ import task.Task;
 
 public class Main {
     public static void main(String[] args) {
-        TaskManager taskManager = Managers.getDefault();
+        TaskManager taskManager = Managers.getInMemoryTaskManager();
         Task task1 = new Task("Переезд", "Собрать вещи", Status.NEW, TaskType.TASK, "10.01.22 14:00", 50);
         Task task2 = new Task("Выступление", "Подготовить речь", Status.NEW, TaskType.TASK, "10.01.22 12:00", 100);
         taskManager.createTask(task1);

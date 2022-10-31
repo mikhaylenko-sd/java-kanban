@@ -15,7 +15,7 @@ class EpicStatusTest {
 
     @BeforeEach
     void setUp() {
-        taskManager = Managers.getDefault();
+        taskManager = Managers.getInMemoryTaskManager();
     }
 
     @Test
