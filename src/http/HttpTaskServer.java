@@ -20,10 +20,12 @@ public class HttpTaskServer {
     private static final int PORT = 8080;
     private static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
     private static final Gson gson = new Gson();
-    private static final TaskManager httpTaskManager = Managers.getDefault("backupKey1");
+    private static TaskManager httpTaskManager;
+    private static HttpServer httpServer;
 
-    public static void main(String[] args) throws IOException {
-        HttpServer httpServer = HttpServer.create();
+    public static void start() throws IOException {
+        httpTaskManager = Managers.getDefault("backupKey1");
+        httpServer = HttpServer.create();
 
         httpServer.bind(new InetSocketAddress(PORT), 0);
         httpServer.createContext("/tasks", new TasksHandler());
@@ -32,11 +34,20 @@ public class HttpTaskServer {
         System.out.println("HTTP-сервер запущен на " + PORT + " порту!");
     }
 
+    public static void stop() {
+        System.out.println("Сервер остановлен.");
+        httpServer.stop(1);
+    }
+
     static class TasksHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange httpExchange) throws IOException {
             String requestMethod = httpExchange.getRequestMethod();
             String path = httpExchange.getRequestURI().getPath();
+            String query = httpExchange.getRequestURI().getQuery();
+            if (query != null) {
+                path = path + "?" + query;
+            }
             String[] splitStrings = path.split("/");
             switch (requestMethod) {
                 case "GET":
