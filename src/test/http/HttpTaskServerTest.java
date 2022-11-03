@@ -34,13 +34,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class HttpTaskServerTest {
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private static final HttpResponse.BodyHandler<String> HANDLER = HttpResponse.BodyHandlers.ofString();
+    private static final String TASK_PATH = "task/";
+    private static final String SUBTASK_PATH = "subtask/";
+    private static final String EPIC_PATH = "epic/";
     private static final String URL = "http://localhost:8080/tasks/";
     private final Gson gson = new Gson();
     private Map<Integer, Task> tasks;
     private Map<Integer, SubTask> subTasks;
     private Map<Integer, Epic> epics;
     private GeneratorId generatorId;
-    private HttpResponse<String> response;
 
     private KVServer kvServer;
 
@@ -62,25 +64,30 @@ class HttpTaskServerTest {
     }
 
     @Test
-    void putGetDeleteTasksTest() throws IOException, InterruptedException {
+    void putTasksTest() throws IOException, InterruptedException {
+        HttpRequest request = createPostRequest(TASK_PATH, createStringTask(TaskFactory.createTask(Status.NEW)));
+        HttpResponse<String> response = httpClient.send(request, HANDLER);
+        assertEquals(201, response.statusCode());
+
+        request = createPostRequest(TASK_PATH, createStringTask(TaskFactory.createTask(Status.DONE)));
+        response = httpClient.send(request, HANDLER);
+        assertEquals(201, response.statusCode());
+    }
+
+    @Test
+    void getTasksTest() throws IOException, InterruptedException {
         Task task1 = TaskFactory.createTask(Status.NEW);
         Task task2 = TaskFactory.createTask(Status.DONE);
         Task task3 = TaskFactory.createTask(Status.NEW);
-        String stringTask1 = gson.toJson(task1);
-        String stringTask2 = gson.toJson(task2);
-        String stringTask3 = gson.toJson(task3);
-        task1.setId(generatorId.generate());
-        task2.setId(generatorId.generate());
-        task3.setId(generatorId.generate());
-        HttpRequest request1 = createPostRequest("task/", stringTask1);
-        HttpRequest request2 = createPostRequest("task/", stringTask2);
-        HttpRequest request3 = createPostRequest("task/", stringTask3);
-        httpClient.send(request1, HANDLER);
-        httpClient.send(request2, HANDLER);
-        httpClient.send(request3, HANDLER);
+        HttpRequest request = createPostRequest(TASK_PATH, createStringTask(task1));
+        httpClient.send(request, HANDLER);
+        request = createPostRequest(TASK_PATH, createStringTask(task2));
+        httpClient.send(request, HANDLER);
+        request = createPostRequest(TASK_PATH, createStringTask(task3));
+        httpClient.send(request, HANDLER);
 
-        request3 = createGetRequest("task/");
-        response = httpClient.send(request3, HANDLER);
+        request = createGetRequest(TASK_PATH);
+        HttpResponse<String> response = httpClient.send(request, HANDLER);
         assertFalse(response.body().isEmpty());
         assertEquals(200, response.statusCode());
         JsonElement jsonElement = JsonParser.parseString(response.body());
@@ -91,11 +98,11 @@ class HttpTaskServerTest {
         assertEquals(task1, tasks.get(task1.getId()));
         assertEquals(task2, tasks.get(task2.getId()));
         assertEquals(task3, tasks.get(task3.getId()));
-        int sizeBefore = tasks.size();
-        assertEquals(3, sizeBefore);
+        int sizeAfter = tasks.size();
+        assertEquals(3, sizeAfter);
 
-        HttpRequest request4 = createGetRequest("task/?id=1");
-        response = httpClient.send(request4, HANDLER);
+        request = createGetRequest(TASK_PATH + "?id=1");
+        response = httpClient.send(request, HANDLER);
         assertFalse(response.body().isEmpty());
         assertEquals(200, response.statusCode());
         jsonElement = JsonParser.parseString(response.body());
@@ -103,24 +110,35 @@ class HttpTaskServerTest {
         JsonObject jsonObject = jsonElement.getAsJsonObject();
         Task task = gson.fromJson(jsonObject, Task.class);
         assertEquals(tasks.get(1), task);
+    }
 
-        HttpRequest request5 = createDeleteRequest("task/?id=1");
-        response = httpClient.send(request5, HANDLER);
+    @Test
+    void deleteTasksTest() throws IOException, InterruptedException {
+        HttpRequest request = createPostRequest(TASK_PATH, createStringTask(TaskFactory.createTask(Status.NEW)));
+        httpClient.send(request, HANDLER);
+        request = createPostRequest(TASK_PATH, createStringTask(TaskFactory.createTask(Status.DONE)));
+        httpClient.send(request, HANDLER);
+        request = createPostRequest(TASK_PATH, createStringTask(TaskFactory.createTask(Status.NEW)));
+        httpClient.send(request, HANDLER);
+
+
+        request = createDeleteRequest(TASK_PATH + "?id=1");
+        HttpResponse<String> response = httpClient.send(request, HANDLER);
         assertEquals(200, response.statusCode());
-        request3 = createGetRequest("task/");
-        response = httpClient.send(request3, HANDLER);
-        jsonElement = JsonParser.parseString(response.body());
-        jsonArray = jsonElement.getAsJsonArray();
+        request = createGetRequest(TASK_PATH);
+        response = httpClient.send(request, HANDLER);
+        JsonElement jsonElement = JsonParser.parseString(response.body());
+        JsonArray jsonArray = jsonElement.getAsJsonArray();
         tasks.clear();
         fillMap(jsonArray);
         int sizeAfter = tasks.size();
-        assertNotEquals(sizeBefore, sizeAfter);
+        assertNotEquals(3, sizeAfter);
 
-        HttpRequest request6 = createDeleteRequest("task/");
-        response = httpClient.send(request6, HANDLER);
+        request = createDeleteRequest(TASK_PATH);
+        response = httpClient.send(request, HANDLER);
         assertEquals(200, response.statusCode());
-        request3 = createGetRequest("task/");
-        response = httpClient.send(request3, HANDLER);
+        request = createGetRequest(TASK_PATH);
+        response = httpClient.send(request, HANDLER);
         jsonElement = JsonParser.parseString(response.body());
         jsonArray = jsonElement.getAsJsonArray();
         tasks.clear();
@@ -130,30 +148,36 @@ class HttpTaskServerTest {
     }
 
     @Test
-    void putGetDeleteSubTasksTest() throws IOException, InterruptedException {
+    void putSubTasksTest() throws IOException, InterruptedException {
         Epic epic = TaskFactory.createEpic(Status.NEW);
-        String stringEpic = gson.toJson(epic);
-        epic.setId(generatorId.generate());
-        SubTask subTask1 = TaskFactory.createSubTask(epic.getId(), Status.NEW);
-        SubTask subTask2 = TaskFactory.createSubTask(epic.getId(), Status.DONE);
-        SubTask subTask3 = TaskFactory.createSubTask(epic.getId(), Status.NEW);
-        String stringSubTask1 = gson.toJson(subTask1);
-        String stringSubTask2 = gson.toJson(subTask2);
-        String stringSubTask3 = gson.toJson(subTask3);
-        subTask1.setId(generatorId.generate());
-        subTask2.setId(generatorId.generate());
-        subTask3.setId(generatorId.generate());
-        HttpRequest request = createPostRequest("epic/", stringEpic);
-        HttpRequest request1 = createPostRequest("subtask/", stringSubTask1);
-        HttpRequest request2 = createPostRequest("subtask/", stringSubTask2);
-        HttpRequest request3 = createPostRequest("subtask/", stringSubTask3);
-        httpClient.send(request, HANDLER);
-        httpClient.send(request1, HANDLER);
-        httpClient.send(request2, HANDLER);
-        httpClient.send(request3, HANDLER);
+        HttpRequest request = createPostRequest(EPIC_PATH, createStringTask(epic));
+        HttpResponse<String> response = httpClient.send(request, HANDLER);
+        assertEquals(201, response.statusCode());
+        request = createPostRequest(SUBTASK_PATH, createStringTask(TaskFactory.createSubTask(epic.getId(), Status.DONE)));
+        response = httpClient.send(request, HANDLER);
+        assertEquals(201, response.statusCode());
+        request = createPostRequest(SUBTASK_PATH, createStringTask(TaskFactory.createSubTask(epic.getId(), Status.NEW)));
+        response = httpClient.send(request, HANDLER);
+        assertEquals(201, response.statusCode());
+    }
 
-        request3 = createGetRequest("subtask/");
-        response = httpClient.send(request3, HANDLER);
+    @Test
+    void getSubTasksTest() throws IOException, InterruptedException {
+        Epic epic = TaskFactory.createEpic(Status.NEW);
+        HttpRequest request = createPostRequest(EPIC_PATH, createStringTask(epic));
+        httpClient.send(request, HANDLER);
+        SubTask subTask1 = TaskFactory.createSubTask(epic.getId(), Status.DONE);
+        SubTask subTask2 = TaskFactory.createSubTask(epic.getId(), Status.NEW);
+        SubTask subTask3 = TaskFactory.createSubTask(epic.getId(), Status.DONE);
+        request = createPostRequest(SUBTASK_PATH, createStringTask(subTask1));
+        httpClient.send(request, HANDLER);
+        request = createPostRequest(SUBTASK_PATH, createStringTask(subTask2));
+        httpClient.send(request, HANDLER);
+        request = createPostRequest(SUBTASK_PATH, createStringTask(subTask3));
+        httpClient.send(request, HANDLER);
+
+        request = createGetRequest(SUBTASK_PATH);
+        HttpResponse<String> response = httpClient.send(request, HANDLER);
         assertFalse(response.body().isEmpty());
         assertEquals(200, response.statusCode());
         JsonElement jsonElement = JsonParser.parseString(response.body());
@@ -167,8 +191,8 @@ class HttpTaskServerTest {
         int sizeBefore = subTasks.size();
         assertEquals(3, sizeBefore);
 
-        HttpRequest request4 = createGetRequest("subtask/?id=2");
-        response = httpClient.send(request4, HANDLER);
+        request = createGetRequest(SUBTASK_PATH + "?id=2");
+        response = httpClient.send(request, HANDLER);
         assertFalse(response.body().isEmpty());
         assertEquals(200, response.statusCode());
         jsonElement = JsonParser.parseString(response.body());
@@ -177,8 +201,8 @@ class HttpTaskServerTest {
         SubTask subTask = gson.fromJson(jsonObject, SubTask.class);
         assertEquals(subTasks.get(2), subTask);
 
-        HttpRequest request7 = createGetRequest("subtask/epic/?id=1");
-        response = httpClient.send(request7, HANDLER);
+        request = createGetRequest(SUBTASK_PATH + "epic/?id=1");
+        response = httpClient.send(request, HANDLER);
         subTasks.clear();
         assertFalse(response.body().isEmpty());
         assertEquals(200, response.statusCode());
@@ -190,25 +214,35 @@ class HttpTaskServerTest {
         assertEquals(subTask1.getEpicId(), subTasks.get(2).getEpicId());
         assertEquals(subTask2.getEpicId(), subTasks.get(3).getEpicId());
         assertEquals(subTask3.getEpicId(), subTasks.get(4).getEpicId());
+    }
 
+    @Test
+    void deleteSubTasksTest() throws IOException, InterruptedException {
+        Epic epic = TaskFactory.createEpic(Status.NEW);
+        HttpRequest request = createPostRequest(EPIC_PATH, createStringTask(epic));
+        httpClient.send(request, HANDLER);
+        request = createPostRequest(SUBTASK_PATH, createStringTask(TaskFactory.createSubTask(epic.getId(), Status.DONE)));
+        httpClient.send(request, HANDLER);
+        request = createPostRequest(SUBTASK_PATH, createStringTask(TaskFactory.createSubTask(epic.getId(), Status.NEW)));
+        httpClient.send(request, HANDLER);
 
-        HttpRequest request5 = createDeleteRequest("subtask/?id=2");
-        response = httpClient.send(request5, HANDLER);
+        request = createDeleteRequest(SUBTASK_PATH + "?id=2");
+        HttpResponse<String> response = httpClient.send(request, HANDLER);
         assertEquals(200, response.statusCode());
-        request3 = createGetRequest("subtask/");
-        response = httpClient.send(request3, HANDLER);
-        jsonElement = JsonParser.parseString(response.body());
-        jsonArray = jsonElement.getAsJsonArray();
+        request = createGetRequest(SUBTASK_PATH);
+        response = httpClient.send(request, HANDLER);
+        JsonElement jsonElement = JsonParser.parseString(response.body());
+        JsonArray jsonArray = jsonElement.getAsJsonArray();
         subTasks.clear();
         fillMap(jsonArray);
         int sizeAfter = subTasks.size();
-        assertNotEquals(sizeBefore, sizeAfter);
+        assertNotEquals(3, sizeAfter);
 
-        HttpRequest request6 = createDeleteRequest("subtask/");
-        response = httpClient.send(request6, HANDLER);
+        request = createDeleteRequest(SUBTASK_PATH);
+        response = httpClient.send(request, HANDLER);
         assertEquals(200, response.statusCode());
-        request3 = createGetRequest("subtask/");
-        response = httpClient.send(request3, HANDLER);
+        request = createGetRequest(SUBTASK_PATH);
+        response = httpClient.send(request, HANDLER);
         jsonElement = JsonParser.parseString(response.body());
         jsonArray = jsonElement.getAsJsonArray();
         subTasks.clear();
@@ -218,25 +252,30 @@ class HttpTaskServerTest {
     }
 
     @Test
-    void putGetDeleteEpicsTest() throws IOException, InterruptedException {
+    void putEpicsTest() throws IOException, InterruptedException {
+        HttpRequest request = createPostRequest(EPIC_PATH, createStringTask(TaskFactory.createEpic(Status.NEW)));
+        HttpResponse<String> response = httpClient.send(request, HANDLER);
+        assertEquals(201, response.statusCode());
+
+        request = createPostRequest(EPIC_PATH, createStringTask(TaskFactory.createEpic(Status.DONE)));
+        response = httpClient.send(request, HANDLER);
+        assertEquals(201, response.statusCode());
+    }
+
+    @Test
+    void getEpicsTest() throws IOException, InterruptedException {
         Epic epic1 = TaskFactory.createEpic(Status.NEW);
         Epic epic2 = TaskFactory.createEpic(Status.DONE);
         Epic epic3 = TaskFactory.createEpic(Status.NEW);
-        String stringEpic1 = gson.toJson(epic1);
-        String stringEpic2 = gson.toJson(epic2);
-        String stringEpic3 = gson.toJson(epic3);
-        epic1.setId(generatorId.generate());
-        epic2.setId(generatorId.generate());
-        epic3.setId(generatorId.generate());
-        HttpRequest request1 = createPostRequest("epic/", stringEpic1);
-        HttpRequest request2 = createPostRequest("epic/", stringEpic2);
-        HttpRequest request3 = createPostRequest("epic/", stringEpic3);
-        httpClient.send(request1, HANDLER);
-        httpClient.send(request2, HANDLER);
-        httpClient.send(request3, HANDLER);
+        HttpRequest request = createPostRequest(EPIC_PATH, createStringTask(epic1));
+        httpClient.send(request, HANDLER);
+        request = createPostRequest(EPIC_PATH, createStringTask(epic2));
+        httpClient.send(request, HANDLER);
+        request = createPostRequest(EPIC_PATH, createStringTask(epic3));
+        httpClient.send(request, HANDLER);
 
-        request3 = createGetRequest("epic/");
-        response = httpClient.send(request3, HANDLER);
+        request = createGetRequest(EPIC_PATH);
+        HttpResponse<String> response = httpClient.send(request, HANDLER);
         assertFalse(response.body().isEmpty());
         assertEquals(200, response.statusCode());
         JsonElement jsonElement = JsonParser.parseString(response.body());
@@ -247,11 +286,11 @@ class HttpTaskServerTest {
         assertEquals(epic1, epics.get(epic1.getId()));
         assertEquals(epic2, epics.get(epic2.getId()));
         assertEquals(epic3, epics.get(epic3.getId()));
-        int sizeBefore = epics.size();
-        assertEquals(3, sizeBefore);
+        int sizeAfter = epics.size();
+        assertEquals(3, sizeAfter);
 
-        HttpRequest request4 = createGetRequest("epic/?id=1");
-        response = httpClient.send(request4, HANDLER);
+        request = createGetRequest(EPIC_PATH + "?id=1");
+        response = httpClient.send(request, HANDLER);
         assertFalse(response.body().isEmpty());
         assertEquals(200, response.statusCode());
         jsonElement = JsonParser.parseString(response.body());
@@ -259,24 +298,35 @@ class HttpTaskServerTest {
         JsonObject jsonObject = jsonElement.getAsJsonObject();
         Epic epic = gson.fromJson(jsonObject, Epic.class);
         assertEquals(epics.get(1), epic);
+    }
 
-        HttpRequest request5 = createDeleteRequest("epic/?id=1");
-        response = httpClient.send(request5, HANDLER);
+    @Test
+    void deleteEpicsTest() throws IOException, InterruptedException {
+        HttpRequest request = createPostRequest(EPIC_PATH, createStringTask(TaskFactory.createEpic(Status.NEW)));
+        httpClient.send(request, HANDLER);
+        request = createPostRequest(EPIC_PATH, createStringTask(TaskFactory.createEpic(Status.DONE)));
+        httpClient.send(request, HANDLER);
+        request = createPostRequest(EPIC_PATH, createStringTask(TaskFactory.createEpic(Status.NEW)));
+        httpClient.send(request, HANDLER);
+
+
+        request = createDeleteRequest(EPIC_PATH + "?id=1");
+        HttpResponse<String> response = httpClient.send(request, HANDLER);
         assertEquals(200, response.statusCode());
-        request3 = createGetRequest("epic/");
-        response = httpClient.send(request3, HANDLER);
-        jsonElement = JsonParser.parseString(response.body());
-        jsonArray = jsonElement.getAsJsonArray();
+        request = createGetRequest(EPIC_PATH);
+        response = httpClient.send(request, HANDLER);
+        JsonElement jsonElement = JsonParser.parseString(response.body());
+        JsonArray jsonArray = jsonElement.getAsJsonArray();
         epics.clear();
         fillMap(jsonArray);
         int sizeAfter = epics.size();
-        assertNotEquals(sizeBefore, sizeAfter);
+        assertNotEquals(3, sizeAfter);
 
-        HttpRequest request6 = createDeleteRequest("epic/");
-        response = httpClient.send(request6, HANDLER);
+        request = createDeleteRequest(EPIC_PATH);
+        response = httpClient.send(request, HANDLER);
         assertEquals(200, response.statusCode());
-        request3 = createGetRequest("epic/");
-        response = httpClient.send(request3, HANDLER);
+        request = createGetRequest(EPIC_PATH);
+        response = httpClient.send(request, HANDLER);
         jsonElement = JsonParser.parseString(response.body());
         jsonArray = jsonElement.getAsJsonArray();
         epics.clear();
@@ -284,6 +334,7 @@ class HttpTaskServerTest {
         sizeAfter = epics.size();
         assertEquals(0, sizeAfter);
     }
+
 
     @Test
     void getHistoryTest() throws IOException, InterruptedException {
@@ -294,45 +345,30 @@ class HttpTaskServerTest {
         SubTask subTask1 = TaskFactory.createSubTask(epic.getId(), Status.NEW);
         SubTask subTask2 = TaskFactory.createSubTask(epic.getId(), Status.DONE);
 
-        String stringTask1 = gson.toJson(task1);
-        String stringTask2 = gson.toJson(task2);
-        String stringTask3 = gson.toJson(task3);
-        String stringEpic = gson.toJson(epic);
-        String stringSubTask1 = gson.toJson(subTask1);
-        String stringSubTask2 = gson.toJson(subTask2);
+        HttpRequest request = createPostRequest(TASK_PATH, createStringTask(task1));
+        httpClient.send(request, HANDLER);
+        request = createPostRequest(TASK_PATH, createStringTask(task2));
+        httpClient.send(request, HANDLER);
+        request = createPostRequest(TASK_PATH, createStringTask(task3));
+        httpClient.send(request, HANDLER);
+        request = createPostRequest(EPIC_PATH, createStringTask(epic));
+        httpClient.send(request, HANDLER);
+        request = createPostRequest(SUBTASK_PATH, createStringTask(subTask1));
+        httpClient.send(request, HANDLER);
+        request = createPostRequest(SUBTASK_PATH, createStringTask(subTask2));
+        httpClient.send(request, HANDLER);
 
-        task1.setId(generatorId.generate());
-        task2.setId(generatorId.generate());
-        task3.setId(generatorId.generate());
-        epic.setId(generatorId.generate());
-        subTask1.setId(generatorId.generate());
-        subTask2.setId(generatorId.generate());
-
-        HttpRequest request1 = createPostRequest("task/", stringTask1);
-        HttpRequest request2 = createPostRequest("task/", stringTask2);
-        HttpRequest request3 = createPostRequest("task/", stringTask3);
-        HttpRequest request4 = createPostRequest("epic/", stringEpic);
-        HttpRequest request5 = createPostRequest("subtask/", stringSubTask1);
-        HttpRequest request6 = createPostRequest("subtask/", stringSubTask2);
-
-        httpClient.send(request1, HANDLER);
-        httpClient.send(request2, HANDLER);
-        httpClient.send(request3, HANDLER);
-        httpClient.send(request4, HANDLER);
-        httpClient.send(request5, HANDLER);
-        httpClient.send(request6, HANDLER);
-
-        request4 = createGetRequest("epic/?id=4");
-        response = httpClient.send(request4, HANDLER);
+        request = createGetRequest(EPIC_PATH + "?id=4");
+        HttpResponse<String> response = httpClient.send(request, HANDLER);
         assertFalse(response.body().isEmpty());
         assertEquals(200, response.statusCode());
 
-        request2 = createGetRequest("task/?id=2");
-        response = httpClient.send(request2, HANDLER);
+        request = createGetRequest(TASK_PATH + "?id=2");
+        response = httpClient.send(request, HANDLER);
         assertFalse(response.body().isEmpty());
         assertEquals(200, response.statusCode());
 
-        HttpRequest request = createGetRequest("history/");
+        request = createGetRequest("history/");
         response = httpClient.send(request, HANDLER);
         assertFalse(response.body().isEmpty());
         assertEquals(200, response.statusCode());
@@ -347,8 +383,8 @@ class HttpTaskServerTest {
         assertEquals(epic.getId(), id1);
         assertEquals(task2.getId(), id2);
 
-        request4 = createDeleteRequest("epic/?id=4");
-        response = httpClient.send(request4, HANDLER);
+        request = createDeleteRequest(EPIC_PATH + "?id=4");
+        response = httpClient.send(request, HANDLER);
         assertEquals(200, response.statusCode());
         assertTrue(response.body().isEmpty());
 
@@ -371,32 +407,20 @@ class HttpTaskServerTest {
         Task task2 = TaskFactory.createTaskWithTime("02.11.22 17:00", 10);
         Epic epic = TaskFactory.createEpicWithTime();
         SubTask subTask = TaskFactory.createSubTaskWithTime(3, "02.11.22 13:00", 60);
-
-        String stringTask1 = gson.toJson(task1);
-        String stringTask2 = gson.toJson(task2);
-        String stringEpic = gson.toJson(epic);
-        String stringSubTask = gson.toJson(subTask);
-
-        task1.setId(generatorId.generate());
-        task2.setId(generatorId.generate());
-        epic.setId(generatorId.generate());
-        subTask.setId(generatorId.generate());
-
-        HttpRequest request1 = createPostRequest("task/", stringTask1);
-        HttpRequest request2 = createPostRequest("task/", stringTask2);
-        HttpRequest request3 = createPostRequest("epic/", stringEpic);
-        HttpRequest request4 = createPostRequest("subtask/", stringSubTask);
-
-        httpClient.send(request1, HANDLER);
-        httpClient.send(request2, HANDLER);
-        httpClient.send(request3, HANDLER);
-        httpClient.send(request4, HANDLER);
+        HttpRequest request = createPostRequest(TASK_PATH, createStringTask(task1));
+        httpClient.send(request, HANDLER);
+        request = createPostRequest(TASK_PATH, createStringTask(task2));
+        httpClient.send(request, HANDLER);
+        request = createPostRequest(EPIC_PATH, createStringTask(epic));
+        httpClient.send(request, HANDLER);
+        request = createPostRequest(SUBTASK_PATH, createStringTask(subTask));
+        httpClient.send(request, HANDLER);
 
         Task task = null;
         Task[] tasks = new Task[4];
 
-        HttpRequest request = createGetRequest("");
-        response = httpClient.send(request, HANDLER);
+        request = createGetRequest("");
+        HttpResponse<String> response = httpClient.send(request, HANDLER);
         assertFalse(response.body().isEmpty());
         JsonElement jsonElement = JsonParser.parseString(response.body());
         assertTrue(jsonElement.isJsonArray());
@@ -420,6 +444,11 @@ class HttpTaskServerTest {
         assertEquals(task1, tasks[3]);
     }
 
+    private String createStringTask(Task task) {
+        String stringTask = gson.toJson(task);
+        task.setId(generatorId.generate());
+        return stringTask;
+    }
 
     private HttpRequest createGetRequest(String path) {
         return HttpRequest.newBuilder()

@@ -19,6 +19,9 @@ import java.nio.charset.StandardCharsets;
 public class HttpTaskServer {
     private static final int PORT = 8080;
     private static final Charset DEFAULT_CHARSET = StandardCharsets.UTF_8;
+    private static final String TASK = "task";
+    private static final String SUBTASK = "subtask";
+    private static final String EPIC = "epic";
     private static final Gson gson = new Gson();
     private static TaskManager httpTaskManager;
     private static HttpServer httpServer;
@@ -60,6 +63,7 @@ public class HttpTaskServer {
                     handlePostRequest(httpExchange, splitStrings);
                     break;
                 default:
+                    System.out.println("По указанному адресу нет ресурса. Проверьте URL-адрес ресурса и повторите запрос.");
                     httpExchange.sendResponseHeaders(404, 0);
             }
             httpExchange.close();
@@ -72,15 +76,15 @@ public class HttpTaskServer {
             writeResponse(httpExchange, gsonPrioritizedTasks);
         } else if (splitStrings.length == 3) {
             switch (splitStrings[2]) {
-                case "task":
+                case TASK:
                     String gsonAllTasks = gson.toJson(httpTaskManager.getAllTasks());
                     writeResponse(httpExchange, gsonAllTasks);
                     break;
-                case "subtask":
+                case SUBTASK:
                     String gsonAllSubTasks = gson.toJson(httpTaskManager.getAllSubTasks());
                     writeResponse(httpExchange, gsonAllSubTasks);
                     break;
-                case "epic":
+                case EPIC:
                     String gsonAllEpics = gson.toJson(httpTaskManager.getAllEpics());
                     writeResponse(httpExchange, gsonAllEpics);
                     break;
@@ -90,17 +94,17 @@ public class HttpTaskServer {
                     break;
             }
         } else if (splitStrings.length == 4 && splitStrings[3].startsWith("?id=")) {
-            int id = Integer.parseInt(splitStrings[3].substring(4));
+            int id = getTaskId(splitStrings);
             switch (splitStrings[2]) {
-                case "task":
+                case TASK:
                     String gsonTaskById = gson.toJson(httpTaskManager.getTaskById(id));
                     writeResponse(httpExchange, gsonTaskById);
                     break;
-                case "subtask":
+                case SUBTASK:
                     String gsonSubTaskById = gson.toJson(httpTaskManager.getSubTaskById(id));
                     writeResponse(httpExchange, gsonSubTaskById);
                     break;
-                case "epic":
+                case EPIC:
                     String gsonEpicById = gson.toJson(httpTaskManager.getEpicById(id));
                     writeResponse(httpExchange, gsonEpicById);
                     break;
@@ -113,35 +117,40 @@ public class HttpTaskServer {
     }
 
     private static void writeResponse(HttpExchange httpExchange, String request) throws IOException {
-        httpExchange.sendResponseHeaders(200, 0);
-        try (OutputStream outputStream = httpExchange.getResponseBody()) {
-            outputStream.write(request.getBytes(DEFAULT_CHARSET));
+        try {
+            httpExchange.sendResponseHeaders(200, 0);
+            try (OutputStream outputStream = httpExchange.getResponseBody()) {
+                outputStream.write(request.getBytes(DEFAULT_CHARSET));
+            }
+        } catch (IOException e) {
+            System.out.println("На стороне сервера произошла непредвиденная ошибка. Попробуйте повторить запрос позже.");
+            httpExchange.sendResponseHeaders(500, 0);
         }
     }
 
     private static void handleDeleteRequest(HttpExchange httpExchange, String[] splitStrings) throws IOException {
         if (splitStrings.length == 4 && splitStrings[3].startsWith("?id=")) {
-            int id = Integer.parseInt(splitStrings[3].substring(4));
+            int id = getTaskId(splitStrings);
             switch (splitStrings[2]) {
-                case "task":
+                case TASK:
                     httpTaskManager.removeTaskById(id);
                     break;
-                case "subtask":
+                case SUBTASK:
                     httpTaskManager.removeSubTaskById(id);
                     break;
-                case "epic":
+                case EPIC:
                     httpTaskManager.removeEpicById(id);
                     break;
             }
         } else if (splitStrings.length == 3) {
             switch (splitStrings[2]) {
-                case "task":
+                case TASK:
                     httpTaskManager.removeAllTasks();
                     break;
-                case "subtask":
+                case SUBTASK:
                     httpTaskManager.removeAllSubTasks();
                     break;
-                case "epic":
+                case EPIC:
                     httpTaskManager.removeAllEpics();
                     break;
             }
@@ -153,7 +162,7 @@ public class HttpTaskServer {
         String body = new String(httpExchange.getRequestBody().readAllBytes(), DEFAULT_CHARSET);
         if (splitStrings.length == 3) {
             switch (splitStrings[2]) {
-                case "task":
+                case TASK:
                     Task task = gson.fromJson(body, Task.class);
                     task.calculateEndTime();
                     if (httpTaskManager.contains(task)) {
@@ -162,7 +171,7 @@ public class HttpTaskServer {
                         httpTaskManager.createTask(task);
                     }
                     break;
-                case "subtask":
+                case SUBTASK:
                     SubTask subTask = gson.fromJson(body, SubTask.class);
                     subTask.calculateEndTime();
                     if (httpTaskManager.contains(subTask)) {
@@ -172,7 +181,7 @@ public class HttpTaskServer {
                         httpTaskManager.createSubTask(subTask);
                     }
                     break;
-                case "epic":
+                case EPIC:
                     Epic epic = gson.fromJson(body, Epic.class);
                     if (httpTaskManager.contains(epic)) {
                         httpTaskManager.updateEpic(epic);
@@ -183,6 +192,11 @@ public class HttpTaskServer {
             }
         }
         httpExchange.sendResponseHeaders(201, 0);
+    }
+
+    private static int getTaskId(String[] splitStrings) {
+        String query = "?id=";
+        return Integer.parseInt(splitStrings[3].substring(query.length()));
     }
 
 }
